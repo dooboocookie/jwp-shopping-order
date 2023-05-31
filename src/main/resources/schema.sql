@@ -24,8 +24,8 @@ CREATE TABLE cart_item (
 CREATE TABLE coupon (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    min_price INT NOT NULL,
-    max_price INT NOT NULL,
+    min_order_price INT NOT NULL,
+    max_discount_price INT NOT NULL,
     type VARCHAR(255) NOT NULL,
     discount_amount INT,
     discount_percentage DOUBLE
@@ -37,7 +37,7 @@ CREATE TABLE member_coupon (
     coupon_id BIGINT NOT NULL,
     is_used BOOLEAN DEFAULT false NOT NULL,
     expired_at DATETIME NOT NULL,
-    create_at DATETIME DEFAULT current_timestamp NOT NULL,
+    created_at DATETIME DEFAULT current_timestamp NOT NULL,
     FOREIGN KEY (member_id) REFERENCES member(id),
     FOREIGN KEY (coupon_id) REFERENCES coupon(id)
 );
@@ -48,7 +48,7 @@ CREATE TABLE `order` (
     coupon_id BIGINT NOT NULL,
     shipping_fee INT NOT NULL,
     total_price INT NOT NULL,
-    create_at DATETIME DEFAULT current_timestamp NOT NULL,
+    created_at DATETIME DEFAULT current_timestamp NOT NULL,
     FOREIGN KEY (member_id) REFERENCES member(id),
     FOREIGN KEY (coupon_id) REFERENCES coupon(id)
 );

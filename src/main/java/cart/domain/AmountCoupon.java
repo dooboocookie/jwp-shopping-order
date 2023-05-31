@@ -21,9 +21,10 @@ public class AmountCoupon implements Coupon {
         if (couponInfo.getMinPrice() > totalPrice) {
             throw new IllegalArgumentException("주문 금액이 최소 주문 금액보다 작습니다.");
         }
-        return totalPrice - discountAmount;
+        return discountAmount;
     }
 
+    @Override
     public CouponInfo getCouponInfo() {
         return couponInfo;
     }

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Repository
@@ -28,8 +27,21 @@ public class CouponRepository {
         Map<Long, CouponEntity> allCouponsById = couponDao.findAll().stream()
                 .collect(Collectors.toMap(CouponEntity::getId, couponEntity -> couponEntity));
 
-        return memberCouponDao.findByMemberId(member.getId()).stream()
+        return memberCouponDao.findUsableByMemberId(member.getId()).stream()
                 .map(memberCouponEntity -> memberCouponEntity.toCoupon(allCouponsById))
                 .collect(Collectors.toList());
+    }
+
+    public Coupon findById(final Long id) {
+        MemberCouponEntity memberCouponEntity = memberCouponDao.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 멤버의 쿠폰이 존재하지 않습니다."));
+        CouponEntity couponEntity = couponDao.findById(memberCouponEntity.getCouponId())
+                .orElseThrow(() -> new IllegalArgumentException("해당 쿠폰이 존재하지 않습니다."));
+        return memberCouponEntity.toCoupon(couponEntity);
+    }
+
+    // TODO: 5/31/23 예외 컨트롤
+    public void delete(final Coupon coupon) {
+        memberCouponDao.updateUsedById(coupon.getCouponInfo().getId());
     }
 }
