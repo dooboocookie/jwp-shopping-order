@@ -3,8 +3,7 @@ package cart.ui;
 import cart.application.CouponService;
 import cart.application.OrderService;
 import cart.domain.Member;
-import cart.dto.OrderCouponResponse;
-import cart.dto.OrderRequest;
+import cart.dto.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -36,15 +35,36 @@ public class OrderApiController {
                 .build();
     }
 
-    @GetMapping("/coupons")
-    public ResponseEntity<List<OrderCouponResponse>> findCoupons(
-            @RequestParam final List<Long> cartItemId,
-            Member member
-    ) {
-        List<OrderCouponResponse> orderCouponResponses = couponService.calculateCouponForCarts(member, cartItemId);
+    @GetMapping
+    public ResponseEntity<AllOrderResponse> findAllOrders(Member member) {
+        AllOrderResponse allOrderResponse = orderService.findAllOrderByMember(member);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(orderCouponResponses);
+                .body(allOrderResponse);
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderDetailResponse> findOrderDetail(
+            Member member,
+            @PathVariable Long orderId
+    ) {
+        OrderDetailResponse orderDetailResponse = orderService.findOrderByIdAndMember(orderId, member);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(orderDetailResponse);
+    }
+
+    @GetMapping("/coupons")
+    public ResponseEntity<AllOrderCouponResponse> findCoupons(
+            @RequestParam final List<Long> cartItemId,
+            Member member
+    ) {
+        AllOrderCouponResponse allOrderCouponResponse = couponService.calculateCouponForCarts(member, cartItemId);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(allOrderCouponResponse);
     }
 }

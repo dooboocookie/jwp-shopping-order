@@ -1,9 +1,10 @@
 package cart.dao.entity;
 
-import cart.domain.Order;
+import cart.domain.*;
 
-import java.sql.Date;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class OrderEntity {
@@ -29,8 +30,19 @@ public class OrderEntity {
                 order.getMember().getId(),
                 order.getCoupon().getCouponInfo().getId(),
                 order.getShippingFee().getCharge(),
-                order.calculatePaymentPrice(),
+                order.calculateTotalPrice(),
                 null
+        );
+    }
+
+    public Order toOrder(final Member member, final Map<Long, List<OrderItem>> orderItemByOrderId, final Map<Long, Coupon> couponById) {
+        // TODO: 6/1/23 배송비 수정 무조건 필요
+        return new Order(
+                id,
+                shippingFee == 0 ? ShippingFee.NONE : ShippingFee.BASIC,
+                orderItemByOrderId.get(id),
+                couponById.getOrDefault(couponId, Coupon.EMPTY_COUPON),
+                member
         );
     }
 
