@@ -18,14 +18,14 @@ INSERT INTO cart_item (member_id, product_id, quantity) VALUES (1, 1, 2);
 INSERT INTO cart_item (member_id, product_id, quantity) VALUES (1, 2, 4);
 INSERT INTO cart_item (member_id, product_id, quantity) VALUES (2, 3, 5);
 
-INSERT INTO coupon (name, min_order_price, max_discount_price, type, discount_amount, discount_percentage) VALUES ('테스트쿠폰1', 10000, 3000, '퍼센트', null, 0.3);
-INSERT INTO coupon (name, min_order_price, max_discount_price, type, discount_amount, discount_percentage) VALUES ('테스트쿠폰2', 15000, 2000, '금액', 2000, null);
+INSERT INTO coupon (name, min_order_price, max_discount_price, type, discount_amount, discount_percentage) VALUES ('테스트쿠폰1', 10000, 3000, 'FIXED_PERCENTAGE', null, 0.3);
+INSERT INTO coupon (name, min_order_price, max_discount_price, type, discount_amount, discount_percentage) VALUES ('테스트쿠폰2', 15000, null, 'FIXED_AMOUNT', 2000, null);
 
 INSERT INTO member_coupon (member_id, coupon_id, is_used, expired_at) VALUES (1, 1, false, '2023-06-30');
 INSERT INTO member_coupon (member_id, coupon_id, is_used, expired_at) VALUES (1, 2, false, '2023-06-30');
 INSERT INTO member_coupon (member_id, coupon_id, is_used, expired_at) VALUES (1, 2, true, '2023-06-30');
 
-INSERT INTO `order` (member_id, member_coupon_id, shipping_fee, total_price) VALUES (1, 1, 3000, 802000);
+INSERT INTO `order` (member_id, member_coupon_id, shipping_fee, total_price) VALUES (1, 3, 0, 802000);
 
 INSERT INTO order_item (order_id, product_id, name, price, image_url, quantity) VALUES (1, 1, '지구', 1000, 'https://cdn.pixabay.com/photo/2011/12/13/14/28/earth-11009__480.jpg', 2);
 INSERT INTO order_item (order_id, product_id, name, price, image_url, quantity) VALUES (1, 2, '화성', 200000, 'https://cdn.pixabay.com/photo/2011/12/13/14/30/mars-11012__480.jpg', 4);

@@ -40,7 +40,7 @@ public class OrderIntegrationTest extends IntegrationTest {
                 2L,
                 "테스트쿠폰2",
                 15000,
-                2000,
+                null,
                 true,
                 2000,
                 LocalDateTime.parse("2023-06-30 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -162,7 +162,7 @@ public class OrderIntegrationTest extends IntegrationTest {
                         )
                 ),
                 802000,
-                3000,
+                2000,
                 0
         );
         String jsonResponse = given().log().all()
@@ -177,5 +177,17 @@ public class OrderIntegrationTest extends IntegrationTest {
 
         OrderDetailResponse orderDetailResponse = objectMapper.readValue(jsonResponse, OrderDetailResponse.class);
         assertThat(orderDetailResponse).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void 주문을_취소한다() {
+        given().log().all()
+                .auth().preemptive().basic("a@a.com", "1234")
+                .pathParam("orderId", 1)
+                .when()
+                .delete("/orders/{orderId}")
+                .then()
+                .statusCode(HttpStatus.NO_CONTENT.value())
+                .log().all();
     }
 }

@@ -41,7 +41,7 @@ public class OrderDao2 {
                     new String[]{"id"}
             );
             ps.setLong(1, orderEntity.getMemberId());
-            ps.setLong(2, orderEntity.getCouponId());
+            ps.setLong(2, orderEntity.getMemberCouponId());
             ps.setInt(3, orderEntity.getShippingFee());
             ps.setInt(4, orderEntity.getTotalPrice());
             return ps;
@@ -62,5 +62,10 @@ public class OrderDao2 {
         } catch (EmptyResultDataAccessException exception) {
             return Optional.empty();
         }
+    }
+
+    public void deleteById(final Long id) {
+        final String sql = "DELETE FROM order_item WHERE id = ? ";
+        jdbcTemplate.update(sql, id);
     }
 }

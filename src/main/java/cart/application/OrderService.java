@@ -3,7 +3,7 @@ package cart.application;
 import cart.domain.*;
 import cart.dto.*;
 import cart.repository.CartItemRepository;
-import cart.repository.CouponRepository;
+import cart.repository.MemberCouponRepository;
 import cart.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,35 +14,32 @@ import java.util.stream.Collectors;
 @Service
 public class OrderService {
 
-    private final CouponRepository couponRepository;
+    private final MemberCouponRepository memberCouponRepository;
     private final CartItemRepository cartItemRepository;
     private final OrderRepository orderRepository;
 
-    public OrderService(final CouponRepository couponRepository, final CartItemRepository cartItemRepository, final OrderRepository orderRepository) {
-        this.couponRepository = couponRepository;
+    public OrderService(final MemberCouponRepository memberCouponRepository, final CartItemRepository cartItemRepository, final OrderRepository orderRepository) {
+        this.memberCouponRepository = memberCouponRepository;
         this.cartItemRepository = cartItemRepository;
         this.orderRepository = orderRepository;
     }
 
     @Transactional
     public Long createOrder(final Member member, final OrderRequest request) {
-        Coupon coupon = findCouponIfExist(request.getCouponId());
+        MemberCoupon memberCoupon = findCouponIfExist(request.getCouponId());
+        CartItems cartItems = new CartItems(findCartItemsRequest(request));
+        CartItems selectedCartItems = new CartItems(convertToCartItems(member, request));
 
-        List<CartItem> currentCartItems = findCartItemsRequest(request);
-        List<CartItem> selectedCartItems = convertToCartItems(member, request);
+        // TODO: 6/4/23 이 과정이 하나의 도메인 로직으로 들어가도 될듯
+        cartItems.checkStatus(selectedCartItems, member);
+        memberCoupon.checkExpired();
+        memberCoupon.checkOwner(member);
+        Order order = cartItems.order(member, memberCoupon);
+        MemberCoupon usedMemberCoupon = memberCoupon.use();
 
-        validateOrder(member, currentCartItems, selectedCartItems);
-
-        List<OrderItem> orderItems = currentCartItems.stream()
-                .map(CartItem::toOrderItem)
-                .collect(Collectors.toList());
-        Order order = Order.of(null, orderItems, member, coupon);
-
-        Long savedId = orderRepository.save(order);
-        couponRepository.update(coupon);
-        cartItemRepository.deleteAll(currentCartItems);
-
-        return savedId;
+        memberCouponRepository.update(usedMemberCoupon);
+        cartItemRepository.deleteAll(cartItems.getCartItems());
+        return orderRepository.save(order);
     }
 
     @Transactional(readOnly = true)
@@ -53,6 +50,10 @@ public class OrderService {
             order.checkOwner(member);
         }
 
+        return convertToAllOrderResponse(allOrders);
+    }
+
+    private AllOrderResponse convertToAllOrderResponse(final List<Order> allOrders) {
         List<OrderResponse> orderResponses = allOrders.stream()
                 .map(this::convertToOrderResponse)
                 .collect(Collectors.toList());
@@ -61,21 +62,21 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public OrderDetailResponse findOrderByIdAndMember(final Long id, final Member member) {
-        Order order = orderRepository.findByIdAndMember(id, member);
+        Order order = orderRepository.findById(id);
 
         order.checkOwner(member);
 
         return convertToOrderDetailResponse(order);
     }
 
-    private Coupon findCouponIfExist(final Long couponId) {
-        if (couponId== null) {
-            return Coupon.EMPTY_COUPON;
+    private MemberCoupon findCouponIfExist(final Long memberCouponId) {
+        if (memberCouponId== null) {
+            return new EmptyMemberCoupon();
         }
-        return couponRepository.findById(couponId);
+        return memberCouponRepository.findById(memberCouponId);
     }
 
-    private List<CartItem> findCartItemsRequest(final OrderRequest request) {
+    private List<CartItem>  findCartItemsRequest(final OrderRequest request) {
         List<Long> currentCartIds = request.getProducts().stream()
                 .map(OrderCartItemRequest::getCartItemId)
                 .collect(Collectors.toList());
@@ -83,30 +84,11 @@ public class OrderService {
     }
 
     private List<CartItem> convertToCartItems(final Member member, final OrderRequest request) {
-        List<CartItem> selectedCartItems = request.getProducts().stream()
+        return request.getProducts().stream()
                 .map(orderCartItemRequest -> convertToCartItem(orderCartItemRequest, member))
                 .collect(Collectors.toList());
-        return selectedCartItems;
     }
 
-    private void validateOrder(final Member member, final List<CartItem> currentCartItems, final List<CartItem> selectedCartItems) {
-        for (CartItem cartItem : currentCartItems) {
-            cartItem.checkOwner(member);
-            // TODO: 6/1/23 2중 포문 해결
-            validateValue(cartItem, selectedCartItems);
-        }
-    }
-
-    private void validateValue(final CartItem currentCartItem, final List<CartItem> selectedCartItems) {
-        CartItem selectedCartItem = selectedCartItems.stream()
-                .filter(cartItem -> cartItem.equals(currentCartItem))
-                .findAny()
-                .orElseThrow(() -> new IllegalArgumentException("해당 장바구니 상품은 선택되지 않았습니다."));
-
-        currentCartItem.checkValue(selectedCartItem);
-    }
-
-    // TODO: 6/1/23 request에 id 받아와야 될지 고민해보기
     private CartItem convertToCartItem(final OrderCartItemRequest orderCartItemRequest, final Member member) {
         return new CartItem(
                 orderCartItemRequest.getCartItemId(),
@@ -149,5 +131,14 @@ public class OrderService {
                 orderItem.getProduct().getImageUrl(),
                 orderItem.getQuantity()
         );
+    }
+
+    public void cancelOrder(final Long orderId, final Member member) {
+        Order order = orderRepository.findById(orderId);
+
+        Order canceledOrder = order.cancel();
+
+        memberCouponRepository.update(canceledOrder.getMemberCoupon());
+        orderRepository.delete(canceledOrder);
     }
 }
