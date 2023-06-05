@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class ControllerExceptionHandler {
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handlerAuthenticationException(Exception exception) {
+    public ResponseEntity<ErrorResponse> handleException(Exception exception) {
+        System.out.println(exception.getMessage());
         ErrorType errorType = ErrorType.from(exception);
         HttpStatus httpStatus = errorType.getHttpStatus();
         ErrorResponse errorResponse = new ErrorResponse(errorType.name());
