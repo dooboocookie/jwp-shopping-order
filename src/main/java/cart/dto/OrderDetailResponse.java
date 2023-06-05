@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class OrderDetailResponse {
-    private Long orderId;
+    private Long id;
     private List<OrderItemResponse> products;
     private Integer totalPrice;
     private Integer discountPrice;
@@ -16,8 +16,8 @@ public class OrderDetailResponse {
     public OrderDetailResponse() {
     }
 
-    public OrderDetailResponse(final Long orderId, final List<OrderItemResponse> products, final Integer totalPrice, final Integer discountPrice, final Integer shippingFee) {
-        this.orderId = orderId;
+    public OrderDetailResponse(final Long id, final List<OrderItemResponse> products, final Integer totalPrice, final Integer discountPrice, final Integer shippingFee) {
+        this.id = id;
         this.products = products;
         this.totalPrice = totalPrice;
         this.discountPrice = discountPrice;
@@ -38,8 +38,8 @@ public class OrderDetailResponse {
         );
     }
 
-    public Long getOrderId() {
-        return orderId;
+    public Long getId() {
+        return id;
     }
 
     public List<OrderItemResponse> getProducts() {
@@ -63,7 +63,7 @@ public class OrderDetailResponse {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final OrderDetailResponse that = (OrderDetailResponse) o;
-        return Objects.equals(orderId, that.orderId)
+        return Objects.equals(id, that.id)
                 && Objects.equals(products, that.products)
                 && Objects.equals(totalPrice, that.totalPrice)
                 && Objects.equals(discountPrice, that.discountPrice)
@@ -72,13 +72,13 @@ public class OrderDetailResponse {
 
     @Override
     public int hashCode() {
-        return Objects.hash(orderId, products, totalPrice, discountPrice, shippingFee);
+        return Objects.hash(id, products, totalPrice, discountPrice, shippingFee);
     }
 
     @Override
     public String toString() {
         return "OrderDetailResponse{" +
-                "orderId=" + orderId +
+                "orderId=" + id +
                 ", products=" + products +
                 ", totalPrice=" + totalPrice +
                 ", discountPrice=" + discountPrice +
