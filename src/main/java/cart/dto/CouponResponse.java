@@ -1,6 +1,8 @@
 package cart.dto;
 
-import java.time.LocalDateTime;
+import cart.domain.Coupon;
+import cart.domain.CouponType;
+
 import java.util.Objects;
 
 public class CouponResponse {
@@ -23,6 +25,18 @@ public class CouponResponse {
         this.type = type;
         this.discountAmount = discountAmount;
         this.discountPercentage = discountPercentage;
+    }
+
+    public static CouponResponse from(final Coupon coupon) {
+        return new CouponResponse(
+                coupon.getCouponInfo().getId(),
+                coupon.getCouponInfo().getName(),
+                coupon.getCouponInfo().getMinOrderPrice(),
+                coupon.getCouponInfo().getMaxDiscountPrice(),
+                CouponType.from(coupon).name(),
+                coupon.getDiscountAmount(),
+                coupon.getDiscountPercentage()
+        );
     }
 
     public Long getId() {

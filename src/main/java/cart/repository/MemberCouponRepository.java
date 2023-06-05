@@ -3,11 +3,16 @@ package cart.repository;
 import cart.dao.CouponDao;
 import cart.dao.MemberCouponDao;
 import cart.dao.MemberDao;
-import cart.dao.MemberDao2;
 import cart.dao.entity.CouponEntity;
 import cart.dao.entity.MemberCouponEntity;
 import cart.dao.entity.MemberEntity;
-import cart.domain.*;
+import cart.domain.Coupon;
+import cart.domain.EmptyMemberCoupon;
+import cart.domain.Member;
+import cart.domain.MemberCoupon;
+import cart.exception.CouponException;
+import cart.exception.MemberCouponException;
+import cart.exception.MemberException;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -19,9 +24,9 @@ import java.util.stream.Collectors;
 public class MemberCouponRepository {
     private final MemberCouponDao memberCouponDao;
     private final CouponDao couponDao;
-    private final MemberDao2 memberDao;
+    private final MemberDao memberDao;
 
-    public MemberCouponRepository(final MemberCouponDao memberCouponDao, final CouponDao couponDao, final MemberDao2 memberDao) {
+    public MemberCouponRepository(final MemberCouponDao memberCouponDao, final CouponDao couponDao, final MemberDao memberDao) {
         this.memberCouponDao = memberCouponDao;
         this.couponDao = couponDao;
         this.memberDao = memberDao;
@@ -53,11 +58,11 @@ public class MemberCouponRepository {
 
     public MemberCoupon findById(final Long id) {
         MemberCouponEntity memberCouponEntity = memberCouponDao.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 멤버의 쿠폰이 존재하지 않습니다."));
+                .orElseThrow(() -> new MemberCouponException.NoExist("해당 멤버의 쿠폰이 존재하지 않습니다."));
         CouponEntity couponEntity = couponDao.findById(memberCouponEntity.getCouponId())
-                .orElseThrow(() -> new IllegalArgumentException("해당 쿠폰이 존재하지 않습니다."));
+                .orElseThrow(() -> new CouponException.NoExist("해당 쿠폰이 존재하지 않습니다."));
         MemberEntity memberEntity = memberDao.findById(memberCouponEntity.getMemberId())
-                .orElseThrow(() -> new IllegalArgumentException("해당 회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new MemberException.NoExist("해당 회원이 존재하지 않습니다."));
         return memberCouponEntity.toMemberCoupon(couponEntity.toCoupon(), memberEntity.toMember());
     }
 

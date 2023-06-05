@@ -1,12 +1,14 @@
 package cart.domain;
 
+import cart.exception.AuthenticationException;
+
 import java.util.Objects;
 
 public class Member {
-    private Long id;
-    private String email;
-    private String password;
-    private String nickname;
+    private final Long id;
+    private final String email;
+    private final String password;
+    private final String nickname;
 
     public Member(final Long id, final String email, final String password, final String nickname) {
         this.id = id;
@@ -16,8 +18,10 @@ public class Member {
     }
 
     // TODO: 6/3/23 안에서 예외 터르리기 
-    public boolean checkPassword(String password) {
-        return this.password.equals(password);
+    public void checkPassword(String password) {
+        if (this.password.equals(password)) {
+            throw new AuthenticationException.LoginFail("로그인 정보가 잘못되었습니다.");
+        }
     }
 
     public Long getId() {
@@ -41,15 +45,12 @@ public class Member {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final Member member = (Member) o;
-        return Objects.equals(id, member.id)
-                && Objects.equals(email, member.email)
-                && Objects.equals(password, member.password)
-                && Objects.equals(nickname, member.nickname);
+        return Objects.equals(id, member.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, email, password, nickname);
+        return Objects.hash(id);
     }
 
     @Override

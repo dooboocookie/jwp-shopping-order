@@ -3,6 +3,9 @@ package cart.repository;
 import cart.dao.*;
 import cart.dao.entity.*;
 import cart.domain.*;
+import cart.exception.CouponException;
+import cart.exception.MemberException;
+import cart.exception.OrderException;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -13,13 +16,13 @@ import java.util.stream.Collectors;
 
 @Repository
 public class OrderRepository {
-    private final OrderDao2 orderDao;
+    private final OrderDao orderDao;
     private final OrderItemDao orderItemDao;
     private final CouponDao couponDao;
     private final MemberCouponDao memberCouponDao;
-    private final MemberDao2 memberDao;
+    private final MemberDao memberDao;
 
-    public OrderRepository(final OrderDao2 orderDao, final OrderItemDao orderItemDao, final CouponDao couponDao, final MemberCouponDao memberCouponDao, final MemberDao2 memberDao) {
+    public OrderRepository(final OrderDao orderDao, final OrderItemDao orderItemDao, final CouponDao couponDao, final MemberCouponDao memberCouponDao, final MemberDao memberDao) {
         this.orderDao = orderDao;
         this.orderItemDao = orderItemDao;
         this.couponDao = couponDao;
@@ -57,10 +60,10 @@ public class OrderRepository {
 
     public Order findById(final Long id) {
         OrderEntity orderEntity = orderDao.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 주문이 존재하지 않습니다."));
+                .orElseThrow(() -> new OrderException.NoExist("해당 주문이 존재하지 않습니다."));
         List<OrderItemEntity> orderItemEntities = orderItemDao.finByOrderId(orderEntity.getId());
         MemberEntity memberEntity = memberDao.findById(orderEntity.getMemberId())
-                .orElseThrow(() -> new IllegalArgumentException("멤버가 존재하지 않습니다."));
+                .orElseThrow(() -> new MemberException.NoExist("멤버가 존재하지 않습니다."));
         Member member = memberEntity.toMember();
 
 
@@ -79,7 +82,7 @@ public class OrderRepository {
         }
         MemberCouponEntity memberCouponEntity = maybeMemberCouponEntity.get();
         CouponEntity couponEntity = couponDao.findById(memberCouponEntity.getCouponId())
-                .orElseThrow(() -> new IllegalArgumentException("쿠폰이 존재하지 않습니다."));
+                .orElseThrow(() -> new CouponException.NoExist("쿠폰이 존재하지 않습니다."));
         Coupon coupon = couponEntity.toCoupon();
         return memberCouponEntity.toMemberCoupon(coupon, member);
     }

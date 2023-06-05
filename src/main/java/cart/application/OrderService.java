@@ -1,7 +1,10 @@
 package cart.application;
 
 import cart.domain.*;
-import cart.dto.*;
+import cart.dto.AllOrderResponse;
+import cart.dto.OrderCartItemRequest;
+import cart.dto.OrderDetailResponse;
+import cart.dto.OrderRequest;
 import cart.repository.CartItemRepository;
 import cart.repository.MemberCouponRepository;
 import cart.repository.OrderRepository;
@@ -13,7 +16,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
-
     private final MemberCouponRepository memberCouponRepository;
     private final CartItemRepository cartItemRepository;
     private final OrderRepository orderRepository;
@@ -28,7 +30,7 @@ public class OrderService {
     public Long createOrder(final Member member, final OrderRequest request) {
         MemberCoupon memberCoupon = findCouponIfExist(request.getCouponId());
         CartItems cartItems = new CartItems(findCartItemsRequest(request));
-        CartItems selectedCartItems = new CartItems(convertToCartItems(member, request));
+        CartItems selectedCartItems = request.toCartItems(member);
 
         // TODO: 6/4/23 이 과정이 하나의 도메인 로직으로 들어가도 될듯
         cartItems.checkStatus(selectedCartItems, member);
@@ -42,6 +44,20 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
+    private MemberCoupon findCouponIfExist(final Long memberCouponId) {
+        if (memberCouponId == null) {
+            return new EmptyMemberCoupon();
+        }
+        return memberCouponRepository.findById(memberCouponId);
+    }
+
+    private List<CartItem> findCartItemsRequest(final OrderRequest request) {
+        List<Long> currentCartIds = request.getProducts().stream()
+                .map(OrderCartItemRequest::getCartItemId)
+                .collect(Collectors.toList());
+        return cartItemRepository.findByIds(currentCartIds);
+    }
+
     @Transactional(readOnly = true)
     public AllOrderResponse findAllOrderByMember(final Member member) {
         List<Order> allOrders = orderRepository.findAllByMember(member);
@@ -50,14 +66,7 @@ public class OrderService {
             order.checkOwner(member);
         }
 
-        return convertToAllOrderResponse(allOrders);
-    }
-
-    private AllOrderResponse convertToAllOrderResponse(final List<Order> allOrders) {
-        List<OrderResponse> orderResponses = allOrders.stream()
-                .map(this::convertToOrderResponse)
-                .collect(Collectors.toList());
-        return new AllOrderResponse(orderResponses);
+        return AllOrderResponse.from(allOrders);
     }
 
     @Transactional(readOnly = true)
@@ -66,73 +75,10 @@ public class OrderService {
 
         order.checkOwner(member);
 
-        return convertToOrderDetailResponse(order);
+        return OrderDetailResponse.from(order);
     }
 
-    private MemberCoupon findCouponIfExist(final Long memberCouponId) {
-        if (memberCouponId== null) {
-            return new EmptyMemberCoupon();
-        }
-        return memberCouponRepository.findById(memberCouponId);
-    }
-
-    private List<CartItem>  findCartItemsRequest(final OrderRequest request) {
-        List<Long> currentCartIds = request.getProducts().stream()
-                .map(OrderCartItemRequest::getCartItemId)
-                .collect(Collectors.toList());
-        return cartItemRepository.findByIds(currentCartIds);
-    }
-
-    private List<CartItem> convertToCartItems(final Member member, final OrderRequest request) {
-        return request.getProducts().stream()
-                .map(orderCartItemRequest -> convertToCartItem(orderCartItemRequest, member))
-                .collect(Collectors.toList());
-    }
-
-    private CartItem convertToCartItem(final OrderCartItemRequest orderCartItemRequest, final Member member) {
-        return new CartItem(
-                orderCartItemRequest.getCartItemId(),
-                orderCartItemRequest.getQuantity(),
-                new Product(null, orderCartItemRequest.getName(), orderCartItemRequest.getPrice(), orderCartItemRequest.getImageUrl()),
-                member
-        );
-    }
-
-    private OrderDetailResponse convertToOrderDetailResponse(final Order order) {
-        List<OrderItemResponse> orderItemResponses = order.getOrderItems()
-                .stream()
-                .map(this::convertToOrderItemResponse)
-                .collect(Collectors.toList());
-        return new OrderDetailResponse(
-                order.getId(),
-                orderItemResponses,
-                order.calculateTotalPrice(),
-                order.calculateDiscountPrice(),
-                order.getShippingFee().getCharge()
-        );
-    }
-
-    private OrderResponse convertToOrderResponse(final Order order) {
-        List<OrderItemResponse> orderItemResponses = order.getOrderItems()
-                .stream()
-                .map(this::convertToOrderItemResponse)
-                .collect(Collectors.toList());
-        return new OrderResponse(
-                order.getId(),
-                orderItemResponses
-        );
-    }
-
-    private OrderItemResponse convertToOrderItemResponse(final OrderItem orderItem) {
-        return new OrderItemResponse(
-                orderItem.getProduct().getId(),
-                orderItem.getProduct().getName(),
-                orderItem.getProduct().getPrice(),
-                orderItem.getProduct().getImageUrl(),
-                orderItem.getQuantity()
-        );
-    }
-
+    @Transactional(readOnly = true)
     public void cancelOrder(final Long orderId, final Member member) {
         Order order = orderRepository.findById(orderId);
 
