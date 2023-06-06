@@ -9,11 +9,11 @@ jobs:
     steps:
       - name: change permission
         run: |
-          cp -r /home/ubuntu/application.properties /home/ubuntuactions-runner/_work/jwp-shopping-order/jwp-shopping-order/src/main/resources
           sudo chown -R ubuntu:ubuntu /home/ubuntu/actions-runner/_work/jwp-shopping-order
       - uses: actions/checkout@v3
       - name: gradle bootjar
         run: |
+          cp -r /home/ubuntu/application.properties /home/ubuntu/actions-runner/_work/jwp-shopping-order/jwp-shopping-order/src/main/resources
           chmod +x ./gradlew
           ./gradlew bootjar
       - name: kill 80 port if exist
